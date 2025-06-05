@@ -5,22 +5,17 @@ from mysql.connector import Error
 app = Flask(__name__)
 
 # MySQL Configuration
+import mysql.connector
+from mysql.connector import Error
+
 hostname = "i34nt.h.filess.io"
 database = "loveletter_hatpoolsad"
 port = "3307"
 username = "loveletter_hatpoolsad"
 password = "c7c224177f6cb2e6551e510bc8df435084fe3662"
 
-db_config = {
-    "host": hostname,
-    "database": database,
-    "user": username,
-    "password": password,
-    "port": port
-}
-
 try:
-    connection = mysql.connector.connect(**db_config)
+    connection = mysql.connector.connect(host=hostname, database=database, user=username, password=password, port=port)
     if connection.is_connected():
         db_Info = connection.get_server_info()
         print("Connected to MySQL Server version ", db_Info)
@@ -37,17 +32,7 @@ finally:
         connection.close()
         print("MySQL connection is closed")
 
-def insert_response(answer):
-    try:
-        conn = mysql.connector.connect(**db_config)
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO responses (answer) VALUES (%s)", (answer,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        print(f"Saved response: {answer}")
-    except Exception as e:
-        print("Database error:", e)
+
 
 @app.route('/')
 def home():
