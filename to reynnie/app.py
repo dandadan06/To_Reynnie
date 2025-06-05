@@ -1,24 +1,41 @@
 from flask import Flask, render_template, request, jsonify
 import mysql.connector
-from twilio.rest import Client
+from mysql.connector import Error
 
 app = Flask(__name__)
 
 # MySQL Configuration
+hostname = "i34nt.h.filess.io"
+database = "loveletter_hatpoolsad"
+port = "3307"
+username = "loveletter_hatpoolsad"
+password = "c7c224177f6cb2e6551e510bc8df435084fe3662"
+
 db_config = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': '',  # Default for XAMPP
-    'database': 'love_letter'
+    "host": hostname,
+    "database": database,
+    "user": username,
+    "password": password,
+    "port": port
 }
 
-# Twilio Configuration (replace these with your actual Twilio credentials)
-account_sid = 'AC2d6bbd6741d764c34adf4dd4f45435d4'
-auth_token = '39c238d50df828f2f0c293e0504224a7'
-twilio_number = '+639602618779'  # Your Twilio number
-your_number = '+639363639838'  # Your personal number
+try:
+    connection = mysql.connector.connect(**db_config)
+    if connection.is_connected():
+        db_Info = connection.get_server_info()
+        print("Connected to MySQL Server version ", db_Info)
+        cursor = connection.cursor()
+        cursor.execute("select database();")
+        record = cursor.fetchone()
+        print("You're connected to database: ", record)
 
-twilio_client = Client(account_sid, auth_token)
+except Error as e:
+    print("Error while connecting to MySQL", e)
+finally:
+    if connection.is_connected():
+        cursor.close()
+        connection.close()
+        print("MySQL connection is closed")
 
 def insert_response(answer):
     try:
@@ -31,17 +48,6 @@ def insert_response(answer):
         print(f"Saved response: {answer}")
     except Exception as e:
         print("Database error:", e)
-
-def send_sms(answer):
-    try:
-        message = twilio_client.messages.create(
-            body=f"She answered: {answer.upper()} ❤️",
-            from_=twilio_number,
-            to=your_number
-        )
-        print("SMS sent:", message.sid)
-    except Exception as e:
-        print("SMS error:", e)
 
 @app.route('/')
 def home():
@@ -62,7 +68,6 @@ def handle_response():
     
     if answer in ['yes', 'no']:
         insert_response(answer)
-        send_sms(answer)
         return jsonify({'redirect': f'/{answer}'})
     
     return jsonify({'error': 'Invalid response'}), 400
